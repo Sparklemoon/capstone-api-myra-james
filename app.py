@@ -8,6 +8,7 @@ from flask_bcrypt import Bcrypt
 import os
 import config
 
+
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
@@ -15,13 +16,13 @@ import cloudinary.api
 app = Flask(__name__)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config["SQLALCHEMY_DATABASE_URI"]=config.API_KEY_HEROKU
+app.config["SQLALCHEMY_DATABASE_URI"]=os.environ.get('API_KEY_HEROKU')
 
 
 cloudinary.config( 
 cloud_name = "sparklemoon", 
-api_key = config.API_KEY_CLOUD, 
-api_secret = config.API_SECRET_CLOUD
+api_key = os.environ.get('API_KEY_CLOUD'), 
+api_secret = os.environ.get('API_SECRET_CLOUD')
 )
 
 
@@ -141,3 +142,4 @@ def delete_image_by_id():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
