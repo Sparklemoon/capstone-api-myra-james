@@ -1,0 +1,143 @@
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy   
+from flask_marshmallow import Marshmallow  
+from flask_cors import CORS  
+from flask_heroku import Heroku
+from flask_bcrypt import Bcrypt  
+
+import os
+import config
+
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+app = Flask(__name__)
+
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config["SQLALCHEMY_DATABASE_URI"]=config.API_KEY_HEROKU
+
+
+cloudinary.config( 
+cloud_name = "sparklemoon", 
+api_key = config.API_KEY_CLOUD, 
+api_secret = config.API_SECRET_CLOUD
+)
+
+
+db = SQLAlchemy(app)
+ma = Marshmallow(app)
+bcrypt = Bcrypt(app)
+
+CORS(app)
+Heroku(app)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(20), unique=True, nullable=False) 
+    password = db.Column(db.String, nullable=False)
+
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+
+class UserSchema(ma.Schema):
+    class Meta:
+        fields = ("id", "username", "password")
+
+user_schema = UserSchema()
+multiple_user_schema = UserSchema(many=True)
+
+class Image(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    image = db.Column(db.String, nullable=False, unique=True)
+
+    def __init__(self, image):
+        self.image = image
+
+class ImageSchema(ma.Schema):
+    class Meta:
+        fields = ("id", "image")
+
+image_schema = ImageSchema()
+multiple_image_schema = ImageSchema(many=True)
+
+
+@app.route("/user/add", methods=["POST"])
+def create_user():
+    if request.content_type != "application/json":
+        return "ERROR JSON NEED PEW PEW"
+
+    post_data = request.get_json()
+    username = post_data.get("username")
+    password = post_data.get("password")
+
+    existingUser = db.session.query(User).filter(User.username == username).first()
+    if existingUser is not None:
+        return jsonify("User already exists")
+
+    password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
+
+    record = User(username, password_hash)
+    db.session.add(record)
+    db.session.commit()
+
+    return jsonify("User added good job")
+
+
+@app.route("/user/get", methods=["GET"])
+def get_all_users():
+    all_users = db.session.query(User).all()
+    return jsonify(multiple_user_schema.dump(all_users))
+
+
+@app.route("/user/authentication", methods=["POST"])
+def user_authentication():
+    if request.content_type != "application/json":
+        return "ERROR JSON NEED PEW PEW"
+
+    post_data = request.get_json()
+    username = post_data.get("username")
+    password = post_data.get("password")
+
+    user = db.session.query(User).filter(User.username == username).first()
+
+    if user is None:
+        return jsonify("YOU SHALL NOT PASS")
+
+    if bcrypt.check_password_hash(user.password, password) != True:
+        return jsonify("YOU SHALL NOT PASS")
+    
+    return jsonify("SUCCESS")
+
+
+@app.route("/image/add", methods=["POST"])
+def image_photo():
+    if request.content_type != "application/json":
+        return"Error: must be set as JSON."
+
+    post_data = request.get_json()
+    image = post_data.get("image")
+
+    record = Image(image)
+    db.session.add(record)
+    db.session.commit()
+
+    return jsonify("Image added good job")
+
+@app.route("/image/get", methods=["GET"])
+def get_all_images():
+    all_images = db.session.query(Image).all()
+    return jsonify(multiple_image_schema.dump(all_images))
+
+@app.route("/image/delete/<id>", methods=["DELETE"])
+def delete_image_by_id():
+    record = db.session.query(Image).filter(Image.id == id).first()
+
+    db.session.delete(record)
+    db.session.commit()
+    return jsonify("image DELETED byebye")
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
