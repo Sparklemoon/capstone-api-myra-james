@@ -6,7 +6,7 @@ from flask_heroku import Heroku
 from flask_bcrypt import Bcrypt  
 
 import os
-import config
+
 
 
 import cloudinary
