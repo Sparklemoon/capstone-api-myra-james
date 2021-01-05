@@ -29,7 +29,7 @@ db = SQLAlchemy(app)
 ma = Marshmallow(app)
 bcrypt = Bcrypt(app)
 
-CORS(app)
+
 Heroku(app)
 
 class User(db.Model):
