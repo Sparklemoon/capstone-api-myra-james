@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy   
-from flask_marshmallow import Marshmallow    
+from flask_marshmallow import Marshmallow
+from flask_cors import CORS    
 from flask_heroku import Heroku
 from flask_bcrypt import Bcrypt  
 
@@ -15,15 +16,7 @@ import cloudinary.api
 app = Flask(__name__)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config["SQLALCHEMY_DATABASE_URI"]=os.environ.get('API_KEY_HEROKU')
-
-
-cloudinary.config( 
-cloud_name = "sparklemoon", 
-api_key = os.environ.get('API_KEY_CLOUD'), 
-api_secret = os.environ.get('API_SECRET_CLOUD')
-)
-
+app.config["SQLALCHEMY_DATABASE_URI"]=os.environ.get('postgres://jcqydfrmcbswmt:23ea87404df287326384c16d85b8a77b11851715d05589e9253ccd62d0e11eaf@ec2-35-168-77-215.compute-1.amazonaws.com:5432/d338e1d5sd0shc')
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
@@ -31,6 +24,16 @@ bcrypt = Bcrypt(app)
 
 
 Heroku(app)
+CORS(app)
+
+cloudinary.config( 
+cloud_name = "sparklemoon", 
+api_key = os.environ.get('968967498116363'), 
+api_secret = os.environ.get('V2nQFNIJ9QlN_ZIAU-wBd96N4hw')
+)
+
+
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
